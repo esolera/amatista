@@ -1,4 +1,5 @@
 import numpy as np
+from numpy import genfromtxt
 import matplotlib.pyplot as plt
 from scipy.io import wavfile
 
@@ -37,32 +38,43 @@ def split_and_sum(matrix_conv,matrix_data):
         matrix_in_data[i]=matrix_conv[i][:len(matrix_data[0])]
         matrix_save_data[i+1]=matrix_conv[i][-(len(matrix_conv[0])-len(matrix_data[0])):]
         matrix_in_data[i][:(len(matrix_conv[0])-len(matrix_data[0]))]=matrix_in_data[i][:(len(matrix_conv[0])-len(matrix_data[0]))]+matrix_save_data[i]
-
     matriz_datos = np.reshape(matrix_in_data,(len(matrix_in_data)*len(matrix_in_data[1])))
     return matriz_datos
+def autocorrelacion_ceptro(matrix_in):
+    matrix_out=np.zeros(shape=(len(matrix_in),len(matrix_in[0])))
+    for i in range(len(matrix_in)):
+        matrix_out[i]=np.absolute(np.fft.ifft(np.power(np.absolute(np.log(np.fft.fft(matrix_in[i]))),2)))
+    return matrix_out
+def metadatos(matriz_in,retaso0,retaso1):
+    matrix_out=np.zeros(len(matriz_in)-1)
+    restaso1_n=int((retraso1*rate)/1000)
+    restaso0_n=int((restaso0*rate)/1000)
+    for i in range(len(matriz_in)):
+        if(matriz_in[i][restaso0_n-1]<matriz_in[i][restaso1_n-1]):
+            matrix_out[i]=1
+    return matrix_out
+def comparing(meta_original,meta_calculado):
+    cont=0
+    for i in range(len(meta_original)):
+        if(meta_original[i]==meta_calculado[i]):
+            cont=cont+1
+    return cont
 
 
 
 
-rate, data = wavfile.read('Market.wav')
-datos=np.asarray(data)
-datos=datos.astype(float)
-datos=(datos-128)/256
-a=enventanado(datos,rate,15)
-filas=len(a)
-metadatos=np.random.randint(2, size=len(a))
-np.savetxt('meta.csv', metadatos.astype(np.uint8), delimiter=',')
+rate, data = wavfile.read('pruebasss.wav')
+
+a=enventanado(data,rate,15)
+print("Cantidad de ventanas",len(a))
+filtro=np.hamming(len(a[0]))
+for i in range(len(a)):
+    a[i]=a[i]*filtro
+b=autocorrelacion_ceptro(a)
 retraso1=3
-restaso2=7
-b=matrix_H(metadatos,retraso1,restaso2,0.5,0.5,filas,rate)
-restaso1_n=int((retraso1*rate)/1000)
-restaso2_n=int((restaso2*rate)/1000)
-print("retraso_1:",restaso1_n)
-print("retraso_0:",restaso2_n)
-print("Cantidad ventanas:",filas)
-print("Datos por ventana:",len(a[0]))
-print("Cantidad metadatos",len(metadatos))
-c=convolucion_arreglos(a,b)
-y=split_and_sum(c,a)
-y=(y*256)+128
-wavfile.write('./pruebasss.wav',rate,y.astype(np.uint8))
+restaso0=8
+c=metadatos(b,restaso0,retraso1)
+meta_original = genfromtxt('meta.csv', delimiter=',')
+numero_datos_correctos=comparing(meta_original,c)
+procentaje=(numero_datos_correctos/(len(a)-1))*100
+print(procentaje)
