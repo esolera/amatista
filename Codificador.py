@@ -37,39 +37,70 @@ def split_and_sum(matrix_conv,matrix_data):
         matrix_in_data[i]=matrix_conv[i][:len(matrix_data[0])]
         matrix_save_data[i+1]=matrix_conv[i][-(len(matrix_conv[0])-len(matrix_data[0])):]
         matrix_in_data[i][:(len(matrix_conv[0])-len(matrix_data[0]))]=matrix_in_data[i][:(len(matrix_conv[0])-len(matrix_data[0]))]+matrix_save_data[i]
-
     matriz_datos = np.reshape(matrix_in_data,(len(matrix_in_data)*len(matrix_in_data[1])))
     return matriz_datos
-
-
-
-
+#----------------------------------------------------------------------------------------------------------------
+#--------------------------------Lectura del Wav-----------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------
 rate, data = wavfile.read('Market.wav')
-datos=np.asarray(data)
-datos=datos.astype(float)
+#----------------------------------------------------------------------------------------------------------------
+#-------------------------------------Parametros-----------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------
+ventana_size=15
+retraso1=3
+retraso0=7
+Amplitud1=0.5
+Amplitud0=0.5
+#----------------------------------------------------------------------------------------------------------------
+#-------------------------------------Normalizacion de datos-----------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------
+datos=np.asarray(data).astype(float)
 if (data.dtype==datos.astype(np.uint8).dtype):
     datos=(datos-128)/256
 if (data.dtype==datos.astype(np.uint16).dtype):
     datos=(datos-32768)/65536
-a=enventanado(datos,rate,45)
-filas=len(a)
-metadatos=np.random.randint(2, size=len(a))
+#----------------------------------------------------------------------------------------------------------------
+#-------------------------------------Enventanado----------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------
+Datos_envantanados=enventanado(datos,rate,ventana_size)
+filas=len(Datos_envantanados)
+#----------------------------------------------------------------------------------------------------------------
+#-------------------------------------Metadatos----------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------
+metadatos=np.random.randint(2, size=len(Datos_envantanados))
 np.savetxt('meta.csv', metadatos.astype(np.uint8), delimiter=',')
-retraso1=3
-restaso2=7
-b=matrix_H(metadatos,retraso1,restaso2,0.0005,0.0005,filas,rate)
-restaso1_n=int((retraso1*rate)/1000)
-restaso2_n=int((restaso2*rate)/1000)
-print("retraso_1:",restaso1_n)
-print("retraso_0:",restaso2_n)
-print("Cantidad ventanas:",filas)
-print("Datos por ventana:",len(a[0]))
-print("Cantidad metadatos",len(metadatos))
-c=convolucion_arreglos(a,b)
-y=split_and_sum(c,a)
+#----------------------------------------------------------------------------------------------------------------
+#-------------------------------------Matriz_H-------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------
+matriz_H=matrix_H(metadatos,retraso1,retraso0,Amplitud1,Amplitud0,filas,rate)
+#----------------------------------------------------------------------------------------------------------------
+#-------------------------------------Convolucion----------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------
+covolucion=convolucion_arreglos(Datos_envantanados,matriz_H)
+#----------------------------------------------------------------------------------------------------------------
+#----------------------------------Reconstrucción del wav--------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------
+y=split_and_sum(covolucion,Datos_envantanados)
 if (data.dtype==y.astype(np.uint8).dtype):
     y=(y*256)+128
     wavfile.write('./pruebasss.wav',rate,y.astype(np.uint8))
 if (data.dtype==y.astype(np.uint16).dtype):
     y=(y*65536)+32768
     wavfile.write('./pruebasss.wav',rate,y.astype(np.uint16))
+#----------------------------------------------------------------------------------------------------------------
+#----------------------------------Printeo de informacion--------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------
+retraso1_n=int((retraso1*rate)/1000)
+retraso0_n=int((retraso0*rate)/1000)
+Data_Rate=1000*(1/ventana_size)
+print("----------------------------------------------------------------------------------------------------------")
+print("------------------------------------Codificador-----------------------------------------------------------")
+print("----------------------------------------------------------------------------------------------------------")
+print("retraso_1 en tiempo:",retraso1)
+print("retraso_0 en tiempo:",retraso0)
+print("retraso_1 en n:",retraso1_n)
+print("retraso_0 en n:",retraso0_n)
+print("Cantidad ventanas:",filas)
+print("Datos por ventana:",len(Datos_envantanados[0]))
+print("Cantidad metadatos",len(metadatos))
+print("Data Rate",Data_Rate)
