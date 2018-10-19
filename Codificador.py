@@ -67,8 +67,9 @@ print("Datos por ventana:",len(a[0]))
 print("Cantidad metadatos",len(metadatos))
 c=convolucion_arreglos(a,b)
 y=split_and_sum(c,a)
-y=(y*256)+128
 if (data.dtype==y.astype(np.uint8).dtype):
+    y=(y*256)+128
     wavfile.write('./pruebasss.wav',rate,y.astype(np.uint8))
 if (data.dtype==y.astype(np.uint16).dtype):
+    y=(y*65536)+32768
     wavfile.write('./pruebasss.wav',rate,y.astype(np.uint16))
