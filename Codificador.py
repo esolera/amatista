@@ -47,14 +47,17 @@ def split_and_sum(matrix_conv,matrix_data):
 rate, data = wavfile.read('Market.wav')
 datos=np.asarray(data)
 datos=datos.astype(float)
-datos=(datos-128)/256
-a=enventanado(datos,rate,15)
+if (data.dtype==datos.astype(np.uint8).dtype):
+    datos=(datos-128)/256
+if (data.dtype==datos.astype(np.uint16).dtype):
+    datos=(datos-32768)/65536
+a=enventanado(datos,rate,45)
 filas=len(a)
 metadatos=np.random.randint(2, size=len(a))
 np.savetxt('meta.csv', metadatos.astype(np.uint8), delimiter=',')
 retraso1=3
 restaso2=7
-b=matrix_H(metadatos,retraso1,restaso2,0.5,0.5,filas,rate)
+b=matrix_H(metadatos,retraso1,restaso2,0.0005,0.0005,filas,rate)
 restaso1_n=int((retraso1*rate)/1000)
 restaso2_n=int((restaso2*rate)/1000)
 print("retraso_1:",restaso1_n)
@@ -65,4 +68,7 @@ print("Cantidad metadatos",len(metadatos))
 c=convolucion_arreglos(a,b)
 y=split_and_sum(c,a)
 y=(y*256)+128
-wavfile.write('./pruebasss.wav',rate,y.astype(np.uint8))
+if (data.dtype==y.astype(np.uint8).dtype):
+    wavfile.write('./pruebasss.wav',rate,y.astype(np.uint8))
+if (data.dtype==y.astype(np.uint16).dtype):
+    wavfile.write('./pruebasss.wav',rate,y.astype(np.uint16))
