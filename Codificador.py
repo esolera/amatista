@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.io import wavfile
 import sys
 
+# Instruccion Cancion retraso1 retraso0 amplitud1 Amplitud0 tamaño_ventana
 def enventanado (data,rate,tiempo):
     num_columnas=int(rate*(tiempo/1000)) # datos por ventana
     num_filas=int(len(data)/num_columnas)+1 #cantidad de ventanas
@@ -98,14 +99,15 @@ retraso1_n=int((retraso1*rate)/1000)
 retraso0_n=int((retraso0*rate)/1000)
 Data_Rate=1000*(1/ventana_size)
 
-print("----------------------------------------------------------------------------------------------------------")
-print("------------------------------------Codificador-----------------------------------------------------------")
-print("----------------------------------------------------------------------------------------------------------")
-print("retraso_1 en tiempo:",retraso1)
-print("retraso_0 en tiempo:",retraso0)
-print("retraso_1 en n:",retraso1_n)
-print("retraso_0 en n:",retraso0_n)
-print("Cantidad ventanas:",filas)
-print("Datos por ventana:",len(Datos_envantanados[0]))
-print("Cantidad metadatos",len(metadatos))
-print("Data Rate",Data_Rate)
+#print("----------------------------------------------------------------------------------------------------------")
+#print("------------------------------------Codificador-----------------------------------------------------------")
+#print("----------------------------------------------------------------------------------------------------------")
+#print("retraso_1 en tiempo:",retraso1)
+#print("retraso_0 en tiempo:",retraso0)
+#print("retraso_1 en n:",retraso1_n)
+#print("retraso_0 en n:",retraso0_n)
+print("Bit Codificados:",filas)
+print("Byte Codificados:",filas/8)
+#print("Datos por ventana:",len(Datos_envantanados[0]))
+#print("Cantidad metadatos",len(metadatos))
+#print("Data Rate",Data_Rate)
