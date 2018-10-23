@@ -23,8 +23,8 @@ for i in var:
             print("Amplitud:",amplitudes)
             print("----------------------------------------------------------------------------------------------------------")
             for a in range(5):
-                os.system('python3 Codificador.py Canciones/%s 3 8 %f %f %i' %(i,amplitudes,amplitudes,ventana))
-                s2_out = subprocess.check_output([sys.executable, "Decodificador.py", "pruebasss.wav","3","8","%i"%(ventana)])
+                os.system('python3 Codificador_Multiple.py Canciones/%s 1 3 5 7 %f %f %i' %(i,amplitudes,amplitudes,ventana))
+                s2_out = subprocess.check_output([sys.executable, "Deodificador_multiple.py", "pruebasss.wav","1","3","5","7","%i"%(ventana)])
                 p[a]=float(s2_out.decode("utf-8"))
             print("Data Recovery Prom:",np.average(p))
             print("Varianza:",np.std(p))
@@ -39,7 +39,7 @@ for i in var:
     plt.ylabel("Data Recover %")
     plt.savefig('%s.png'%(i))
     plt.close()
-    os.system('mv %s.png Resultados/'%(i))
+    os.system('mv %s.png Resultados_Multiples/'%(i))
 
 
 # Con subplot

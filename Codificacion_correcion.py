@@ -12,27 +12,17 @@ def enventanado (data,rate,tiempo):
     matriz_datos = np.reshape(datos_with_zeros, (num_filas, num_columnas))
     return matriz_datos
 
-def matrix_H(metadatos,retraso_3,retraso_2,retraso_1,retraso_0,Amplitud1,Amplitud0,filas,rate):
-    retraso3_muestras=int((retraso_3*rate)/1000)#retraso en muestras de 1
-    retraso2_muestras=int((retraso_2*rate)/1000)#retraso en muestras de 0
+def matrix_H(metadatos,retraso_1,retraso_0,Amplitud1,Amplitud0,filas,rate):
+
     retraso1_muestras=int((retraso_1*rate)/1000)#retraso en muestras de 1
     retraso0_muestras=int((retraso_0*rate)/1000)#retraso en muestras de 0
-    a=[0,0]
-    b=[0,1]
-    c=[1,0]
     matrix = np.zeros(shape=(filas,retraso0_muestras))#array lleno de 0
     for i in range(len(metadatos)):
         matrix[i][0]=1
-        if((metadatos[i]==a).all()):
+        if(metadatos[i]==0):
             matrix[i][retraso0_muestras-1]=Amplitud0
         else:
-            if((metadatos[i]==b).all()):
-                matrix[i][retraso1_muestras-1]=Amplitud1
-            else:
-                if((metadatos[i]==c).all()):
-                    matrix[i][retraso2_muestras-1]=Amplitud1
-                else:
-                    matrix[i][retraso3_muestras-1]=Amplitud1
+            matrix[i][retraso1_muestras-1]=Amplitud1
     return matrix
 
 def convolucion_arreglos(matrix_data,matrix_H):
@@ -51,6 +41,59 @@ def split_and_sum(matrix_conv,matrix_data):
         matrix_in_data[i][:(len(matrix_conv[0])-len(matrix_data[0]))]=matrix_in_data[i][:(len(matrix_conv[0])-len(matrix_data[0]))]+matrix_save_data[i]
     matriz_datos = np.reshape(matrix_in_data,(len(matrix_in_data)*len(matrix_in_data[1])))
     return matriz_datos
+
+def generacion_datos(Numero_ventanas):
+    numero_hamming=int(Numero_ventanas/8)
+    ventanas_nohamming=Numero_ventanas-numero_hamming*8
+    metadatos_sin_hamming=np.random.randint(2, size=ventanas_nohamming)
+    metadatos_iniciales=np.random.randint(16, size=numero_hamming)
+
+    metadatos_con_hamming=np.empty( shape=(0, 0) )
+    for i in range(len(metadatos_iniciales)):
+        codif_en_int=hamming_encode_nibble(metadatos_iniciales[i])
+        array_hamming=[int(x) for x in bin(codif_en_int)[2:]]
+        array_hamming=np.asarray(array_hamming)
+        while (len(array_hamming)<8):
+            array_hamming=np.insert(array_hamming,0,0)
+        metadatos_con_hamming=np.append(metadatos_con_hamming,array_hamming)
+    metadatos_finales=np.append(metadatos_con_hamming,metadatos_sin_hamming)
+    return metadatos_finales
+
+
+def extract_bit(byte, pos):
+    """
+    Extract a bit from a given byte using MS ordering.
+    ie. B7 B6 B5 B4 B3 B2 B1 B0
+    """
+    return (byte >> pos) & 0x01
+def hamming_encode_nibble(data):
+    """
+    Encode a nibble using Hamming encoding.
+    Nibble is provided in form 0b0000DDDD == 0 0 0 0 D3 D2 D1 D0
+    Encoded byte is in form P H2 H1 H0 D3 D2 D1 D0
+    """
+    # Get data bits
+    d = [0, 0, 0, 0]
+    d[0] = extract_bit(data, 0)
+    d[1] = extract_bit(data, 1)
+    d[2] = extract_bit(data, 2)
+    d[3] = extract_bit(data, 3)
+
+    # Calculate hamming bits
+    h = [0, 0, 0]
+    h[0] = (d[1] + d[2] + d[3]) % 2
+    h[1] = (d[0] + d[2] + d[3]) % 2
+    h[2] = (d[0] + d[1] + d[3]) % 2
+     # Calculate parity bit, using even parity
+    p = 0 ^ d[0] ^ d[1] ^ d[2] ^ d[3] ^ h[0] ^ h[1] ^ h[2]
+
+    # Encode byte
+    encoded = (data & 0x0f)
+    encoded |= (p << 7) | (h[2] << 6) | (h[1] << 5) | (h[0] << 4)
+
+    return encoded
+
+
 #----------------------------------------------------------------------------------------------------------------
 #--------------------------------Lectura del Wav-----------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------
@@ -60,13 +103,11 @@ rate, data = wavfile.read(file_rep)
 #----------------------------------------------------------------------------------------------------------------
 #-------------------------------------Parametros-----------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------
-ventana_size=int(sys.argv[8])
-retraso3=int(sys.argv[2])
-retraso2=int(sys.argv[3])
-retraso1=int(sys.argv[4])
-retraso0=int(sys.argv[5])
-Amplitud1=float(sys.argv[6])
-Amplitud0=float(sys.argv[7])
+ventana_size=int(sys.argv[6])
+retraso1=int(sys.argv[2])
+retraso0=int(sys.argv[3])
+Amplitud1=float(sys.argv[4])
+Amplitud0=float(sys.argv[5])
 #----------------------------------------------------------------------------------------------------------------
 #-------------------------------------Normalizacion de datos-----------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------
@@ -83,12 +124,13 @@ filas=len(Datos_envantanados)
 #----------------------------------------------------------------------------------------------------------------
 #-------------------------------------Metadatos----------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------
-metadatos=np.random.randint(2,size=(len(Datos_envantanados), 2))
+#metadatos=np.random.randint(2, size=len(Datos_envantanados))
+metadatos=generacion_datos(filas)
 np.savetxt('meta.csv', metadatos.astype(np.uint8), delimiter=',')
 #----------------------------------------------------------------------------------------------------------------
 #-------------------------------------Matriz_H-------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------
-matriz_H=matrix_H(metadatos,retraso3,retraso2,retraso1,retraso0,Amplitud1,Amplitud0,filas,rate)
+matriz_H=matrix_H(metadatos,retraso1,retraso0,Amplitud1,Amplitud0,filas,rate)
 #----------------------------------------------------------------------------------------------------------------
 #-------------------------------------Convolucion----------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------
@@ -107,9 +149,9 @@ if (data.dtype==y.astype(np.uint16).dtype):
 #----------------------------------------------------------------------------------------------------------------
 #----------------------------------Printeo de informacion--------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------
-#retraso1_n=int((retraso1*rate)/1000)
-#retraso0_n=int((retraso0*rate)/1000)
-#Data_Rate=1000*(1/ventana_size)
+retraso1_n=int((retraso1*rate)/1000)
+retraso0_n=int((retraso0*rate)/1000)
+Data_Rate=1000*(1/ventana_size)
 
 #print("----------------------------------------------------------------------------------------------------------")
 #print("------------------------------------Codificador-----------------------------------------------------------")
@@ -118,8 +160,8 @@ if (data.dtype==y.astype(np.uint16).dtype):
 #print("retraso_0 en tiempo:",retraso0)
 #print("retraso_1 en n:",retraso1_n)
 #print("retraso_0 en n:",retraso0_n)
-print("Bit Codificados:",filas*2)
-print("Byte Codificados:",filas/4)
+print("Bit Codificados:",4*(filas/8))
+print("Byte Codificados:",(4*(filas/8))/8)
 #print("Datos por ventana:",len(Datos_envantanados[0]))
 #print("Cantidad metadatos",len(metadatos))
 #print("Data Rate",Data_Rate)
