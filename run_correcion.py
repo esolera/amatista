@@ -8,14 +8,14 @@ print(var)
 graf=np.zeros(10)
 graf1=np.zeros(10)
 contador=0
-
+Cantidad=int(sys.argv[1])
 for i in var:
     plt.figure(figsize=(10,10))
     print("----------------------------------------------------------------------------------------------------------")
     print("------------------------------------%s-----------------------------------------------------"%(i))
     print("----------------------------------------------------------------------------------------------------------")
-    p=np.zeros(5)
-    p1=np.zeros(5)
+    p=np.zeros(Cantidad)
+    p1=np.zeros(Cantidad)
     for ventana in range(10,60,10):
         contador2=0
         print("----------------------------------------------------------------------------------------------------------")
@@ -24,7 +24,7 @@ for i in var:
             print("----------------------------------------------------------------------------------------------------------")
             print("Amplitud:",amplitudes)
             print("----------------------------------------------------------------------------------------------------------")
-            for a in range(5):
+            for a in range(Cantidad):
                 os.system('python3 Codificacion_correcion.py Canciones/%s 3 8 %f %f %i' %(i,amplitudes,amplitudes,ventana))
                 s2_out = subprocess.check_output([sys.executable, "Decodificador_correcion.py", "pruebasss.wav","3","8","%i"%(ventana)])
                 s3_out = subprocess.check_output([sys.executable, "Decodificador.py", "pruebasss.wav","3","8","%i"%(ventana)])
